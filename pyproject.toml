@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "labops"
+version = "0.1.0"
+description = "CLI for managing datacenter hosts, racks, switches, and operations"
+authors = [
+  { name="Renzo Vallejos", email="renzovallejos95@gmail.com" }
+]
+dependencies = [
+  "click",
+  "requests",
+  "python-dotenv",
+  "fastapi",
+  "uvicorn"
+]
+
+[project.scripts]
+labops = "rack_cli:cli"
+
+[tool.setuptools]
+packages = ["commands"]
+py-modules = ["rack_cli", "api_client", "mock_api", "utils"]
+

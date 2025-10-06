@@ -1,0 +1,27 @@
+# Python virtual environment
+venv/
+
+# Environment variables
+.env
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.pyo
+
+# IDE files (JetBrains/IntelliJ/PyCharm)
+.idea/
+*.iml
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# macOS junk
+.DS_Store
+
+# Optional: VSCode (if you open the project there too)
+.vscode/
