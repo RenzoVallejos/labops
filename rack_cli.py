@@ -1,3 +1,4 @@
+# Handles CLI interface (Click decorators, options)
 import click
 from commands.lookup import lookup_host
 from commands.list_hosts import list_hosts
@@ -9,7 +10,7 @@ from commands.summary import summary
 
 class CustomGroup(click.Group):
     def get_command(self, ctx, cmd_name):
-        # First try to get a regular command
+        # First try to get a regular command from registered commands
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv

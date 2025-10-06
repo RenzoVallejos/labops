@@ -1,14 +1,14 @@
+#  Handles business logic (API calls, formatting)
+
 import click
 from datetime import datetime
 from colorama import Fore, Style, init
 from api_client import get_hosts
+from commands.lookup import format_host_data
 
 init()
 
 def format_hosts_list(hosts_data):
-    if not hosts_data:
-        return "No hosts found."
-
     # Extract hosts from response wrapper
     if isinstance(hosts_data, dict) and 'response' in hosts_data:
         hosts = hosts_data['response']
@@ -24,40 +24,15 @@ def format_hosts_list(hosts_data):
         if not isinstance(host, dict):
             continue
 
-        output.append(f"{Fore.CYAN}Asset ID{Style.RESET_ALL}: {Fore.WHITE}{host.get('assetid', 'N/A')}{Style.RESET_ALL}")
-
-        if host.get('status', {}).get('status'):
-            status = host['status']['status']
-            output.append(f"  {Fore.CYAN}Status{Style.RESET_ALL}: {Fore.WHITE}{status}{Style.RESET_ALL}")
-
-        if host.get('platform'):
-            output.append(f"  {Fore.CYAN}Platform{Style.RESET_ALL}: {Fore.WHITE}{host['platform']}{Style.RESET_ALL}")
-
-        if host.get('location') and host['location'] != 'not set':
-            output.append(f"  {Fore.CYAN}Location{Style.RESET_ALL}: {Fore.WHITE}{host['location']}{Style.RESET_ALL}")
-        elif host.get('serverrack', {}).get('position'):
-            output.append(f"  {Fore.CYAN}Location{Style.RESET_ALL}: {Fore.WHITE}{host['serverrack']['position']}{Style.RESET_ALL}")
-
-        if host.get('hardwareid'):
-            output.append(f"  {Fore.CYAN}Hardware ID{Style.RESET_ALL}: {Fore.WHITE}{host['hardwareid']}{Style.RESET_ALL}")
-
-        output.append("")  # Spacing between hosts
+        # Use the same detailed formatting as format_host_data()
+        formatted_host = format_host_data(host)
+        output.append(formatted_host)
+        output.append("-" * 50)  # Separator between hosts
+        output.append("")
 
     return "\n".join(output)
 
 
-
-@click.command()
-@click.option("--status", default=None, help="Filter hosts by status")
-@click.option("--platform", default=None, help="Filter hosts by platform")
-@click.option("--hostname", default=None, help="Filter hosts by hostname")
-@click.option("--usagetype", default=None, help="Filter hosts by usage type")
-@click.option("--location", default=None, help="Filter hosts by location")
-@click.option("--checkout-owner", default=None, help="Filter hosts by checkout owner")
-@click.option("--search-all", is_flag=True, help="Search all hosts")
-def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, search_all):
-    """CLI entrypoint for listing hosts."""
-    list_hosts(status, platform, hostname, usagetype, location, checkout_owner, search_all)
 
 def list_hosts(status=None, platform=None, hostname=None,
                usagetype=None, location=None,

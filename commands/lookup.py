@@ -97,10 +97,6 @@ def lookup_host(asset_id: str = None, hardware_id: str = None):
             click.echo(f'{{"error": "Hardware ID {hardware_id} not found: {str(e)}"}}')
         return
 
-    if not asset_id:
-        click.echo('{"error": "Please provide an asset ID using --asset-id or hardware ID using --hardware-id"}')
-        return
-
     try:
         result = get_host_by_asset_id(asset_id)
         display_data = result.get('response', result)
