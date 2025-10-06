@@ -42,10 +42,47 @@ def cli(ctx):
 @click.option('--usagetype', help='Fuzzy search hosts by usage type (case-insensitive)')
 @click.option('--location', help='Fuzzy search hosts by location (case-insensitive)')
 @click.option('--checkout-owner', help='Fuzzy search hosts by checkout owner (case-insensitive)')
+@click.option('--bmc', is_flag=True, help='Show only hosts with console IP addresses')
+@click.option('--no-bmc', is_flag=True, help='Show only hosts without console IP addresses')
+@click.option('--available', is_flag=True, help='Show only available hosts')
+@click.option('--pending', is_flag=True, help='Show only hosts pending admin')
+@click.option('--scrapped', is_flag=True, help='Show only scrapped hosts')
+@click.option('--reserved', is_flag=True, help='Show only reserved hosts')
+@click.option('--checked-out', is_flag=True, help='Show only checked out hosts')
+@click.option('--in-qual', is_flag=True, help='Show only hosts in qual')
+@click.option('--pre-qual', is_flag=True, help='Show only hosts in pre-qual')
+@click.option('--core-services', is_flag=True, help='Show only core services hosts')
+@click.option('--liquidated', is_flag=True, help='Show only liquidated hosts')
+@click.option('--pending-disposal', is_flag=True, help='Show only hosts pending disposal')
+@click.option('--returned-vendor', is_flag=True, help='Show only hosts returned to vendor')
 @click.option('--all', 'search_all', help='Fuzzy search across all fields (case-insensitive)')
-def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, search_all):
+def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, available, pending, scrapped, reserved, checked_out, in_qual, pre_qual, core_services, liquidated, pending_disposal, returned_vendor, search_all):
     """List all hosts (filter by specific fields or search across all with --all)"""
-    list_hosts(status, platform, hostname, usagetype, location, checkout_owner, search_all)
+    # Convert flag shortcuts to status filter
+    if available:
+        status = 'Available'
+    elif pending:
+        status = 'Pending Admin'
+    elif scrapped:
+        status = 'Scrapped'
+    elif reserved:
+        status = 'Reserved'
+    elif checked_out:
+        status = 'Checked Out'
+    elif in_qual:
+        status = 'In Qual'
+    elif pre_qual:
+        status = 'Pre-Qual'
+    elif core_services:
+        status = 'Core Services'
+    elif liquidated:
+        status = 'Liquidated'
+    elif pending_disposal:
+        status = 'Pending Disposal'
+    elif returned_vendor:
+        status = 'Returned to Vendor'
+    
+    list_hosts(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, search_all)
 
 
 @cli.command(name="racks")

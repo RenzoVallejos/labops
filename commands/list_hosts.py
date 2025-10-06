@@ -36,7 +36,7 @@ def format_hosts_list(hosts_data):
 
 def list_hosts(status=None, platform=None, hostname=None,
                usagetype=None, location=None,
-               checkout_owner=None, search_all=False):
+               checkout_owner=None, bmc=False, no_bmc=False, search_all=False):
     """
     Retrieve and display host information from the API in formatted output.
     """
@@ -47,6 +47,8 @@ def list_hosts(status=None, platform=None, hostname=None,
         usagetype=usagetype,
         location=location,
         checkout_owner=checkout_owner,
+        bmc=bmc,
+        no_bmc=no_bmc,
         search_all=search_all
     )
 

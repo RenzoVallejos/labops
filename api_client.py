@@ -24,7 +24,7 @@ API_KEY = os.getenv("API_KEY", "mock-secret-token")
 
 def get_hosts(status=None, platform=None, hostname=None,
               usagetype=None, location=None,
-              checkout_owner=None, search_all=False):
+              checkout_owner=None, bmc=False, no_bmc=False, search_all=False):
     """
     Fetch hosts from the API with optional filtering.
     """
@@ -36,10 +36,12 @@ def get_hosts(status=None, platform=None, hostname=None,
         data = cache_data['hosts']
     else:
         # Fetch from API
+        click.echo("Fetching hosts from API...")
         headers = {"X-Api-Key": API_KEY}
         response = requests.get(f"{API_BASE_URL}/hosts", headers=headers, verify=False)
         response.raise_for_status()
         data = response.json()
+        click.echo(" Data retrieved successfully")
 
         # Cache the response
         _save_cache('hosts', data, now)
@@ -49,6 +51,16 @@ def get_hosts(status=None, platform=None, hostname=None,
         hosts = data['response']
     else:
         hosts = data
+
+    # Status filtering
+    if status:
+        hosts = [h for h in hosts if h.get("status", {}).get("status", "").lower() == status.lower()]
+    
+    # BMC filtering
+    if bmc:
+        hosts = [h for h in hosts if h.get("con_ip") and h.get("con_ip").strip()]
+    elif no_bmc:
+        hosts = [h for h in hosts if not h.get("con_ip") or not h.get("con_ip").strip()]
 
     # Platform filtering with fuzzy matching
     if platform:
@@ -66,18 +78,24 @@ def get_hosts(status=None, platform=None, hostname=None,
         if exact_matches:
             hosts = exact_matches
         else:
-            # Case-insensitive fuzzy matching
+            # First try prefix matching (e.g., "monza" matches "MONZA91", "MONZA92", etc.)
             platform_list = list(all_platforms)
-            platform_list_lower = [p.lower() for p in platform_list]
-            close_matches_lower = difflib.get_close_matches(platform.lower(), platform_list_lower, n=5, cutoff=0.3)
-
-            # Map back to original case
-            close_matches = []
-            for match_lower in close_matches_lower:
-                for original in platform_list:
-                    if original.lower() == match_lower:
-                        close_matches.append(original)
-                        break
+            prefix_matches = [p for p in platform_list if p.lower().startswith(platform.lower())]
+            
+            if prefix_matches:
+                close_matches = sorted(prefix_matches)  # Sort alphabetically
+            else:
+                # Fall back to fuzzy matching if no prefix matches
+                platform_list_lower = [p.lower() for p in platform_list]
+                close_matches_lower = difflib.get_close_matches(platform.lower(), platform_list_lower, n=10, cutoff=0.2)
+                
+                # Map back to original case
+                close_matches = []
+                for match_lower in close_matches_lower:
+                    for original in platform_list:
+                        if original.lower() == match_lower:
+                            close_matches.append(original)
+                            break
 
             if close_matches:
                 click.echo(f"No hosts found with platform '{platform}'.\n")
@@ -90,9 +108,13 @@ def get_hosts(status=None, platform=None, hostname=None,
                     if p in close_matches:
                         platform_counts[p] = platform_counts.get(p, 0) + 1
 
+                total_hosts = 0
                 for i, match in enumerate(close_matches, 1):
                     count = platform_counts.get(match, 0)
+                    total_hosts += count
                     click.echo(f"  {i}. {match} ({count} hosts)")
+                
+                click.echo(f"\nTotal: {total_hosts} hosts across all {platform.upper()}* platforms")
 
                 choice = click.prompt("\nEnter number to select, or press Enter to cancel",
                                       type=int, default=0, show_default=False)
@@ -113,10 +135,19 @@ def get_hosts(status=None, platform=None, hostname=None,
 
 
 def get_racks(location=None, rack_type=None, lab=None, usage=None, search_all=False):
-    headers = {"X-Api-Key": API_KEY}
-    response = requests.get(f"{API_BASE_URL}/racks", headers=headers, verify=False)
-    response.raise_for_status()
-    data = response.json()
+    now = time.time()
+    cache_data = _load_cache()
+    
+    if 'racks' in cache_data and now - cache_data.get('racks_time', 0) < CACHE_DURATION:
+        data = cache_data['racks']
+    else:
+        click.echo("Fetching racks from API...")
+        headers = {"X-Api-Key": API_KEY}
+        response = requests.get(f"{API_BASE_URL}/racks", headers=headers, verify=False)
+        response.raise_for_status()
+        data = response.json()
+        click.echo("✓ Data retrieved successfully")
+        _save_cache('racks', data, now)
 
     # Basic local filtering (mock)
     if location:
@@ -125,10 +156,19 @@ def get_racks(location=None, rack_type=None, lab=None, usage=None, search_all=Fa
     return data
 
 def get_switches(status=None, rack=None, location=None, search_all=False):
-    headers = {"X-Api-Key": API_KEY}
-    response = requests.get(f"{API_BASE_URL}/switches", headers=headers, verify=False)
-    response.raise_for_status()
-    data = response.json()
+    now = time.time()
+    cache_data = _load_cache()
+    
+    if 'switches' in cache_data and now - cache_data.get('switches_time', 0) < CACHE_DURATION:
+        data = cache_data['switches']
+    else:
+        click.echo("Fetching switches from API...")
+        headers = {"X-Api-Key": API_KEY}
+        response = requests.get(f"{API_BASE_URL}/switches", headers=headers, verify=False)
+        response.raise_for_status()
+        data = response.json()
+        click.echo("✓ Data retrieved successfully")
+        _save_cache('switches', data, now)
 
     # Basic local filtering (mock)
     if status:
