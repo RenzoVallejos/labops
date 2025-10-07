@@ -107,11 +107,14 @@ Hosts by Status:
   Reserved: 1
 
 Hosts in Rack:
-  R1-A01.10: 1234567890 (DELL-R740) - Available
-  R1-A01.12: 1234567891 (HP-DL380) - Available
-  R1-A01.14: 1234567892 (SUPERMICRO-X11) - Reserved
-  R1-A01.16: 1234567893 (DELL-R640) - Available
-  R1-A01.18: 1234567894 (HP-DL360) - Available
+
+Asset ID     Hardware ID          Platform        BMC IP          LAN IP
+-----------------------------------------------------------------------------
+1234567890   DL.R740-ABC123       DELL-R740       10.1.100.50     10.1.200.50
+1234567891   HP.DL380-XYZ456      HP-DL380        10.1.100.51     10.1.200.51
+1234567892   SM.X11-DEF789        SUPERMICRO-X11  10.1.100.52     N/A
+1234567893   DL.R640-GHI012       DELL-R640       10.1.100.53     10.1.200.53
+1234567894   HP.DL360-JKL345      HP-DL360        N/A             10.1.200.54
 ```
 
 ### Host Filtering
