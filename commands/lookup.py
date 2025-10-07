@@ -37,15 +37,31 @@ def format_host_data(data):
         output.append(f"{Fore.CYAN}LAN IP{Style.RESET_ALL}: {Fore.WHITE}{data['lan_ip']}{Style.RESET_ALL}")
 
     # Rack info
-    if data.get('serverrack'):
-        rack = data['serverrack']
+    rack = data.get('serverrack', {})
+    location = data.get('location', '').strip()
+    
+    # Show rack info if we have serverrack data or location info
+    if rack or location:
         output.append("")
         output.append(f"{Fore.CYAN}Rack Info{Style.RESET_ALL}:")
-        if rack.get('lab'):
+        
+        # Use serverrack data if available, otherwise parse from location
+        if rack and rack.get('lab'):
             output.append(f"  {Fore.CYAN}Lab{Style.RESET_ALL}: {Fore.WHITE}{rack['lab']}{Style.RESET_ALL}")
-        if rack.get('position'):
+        elif location:
+            # Extract lab from location (e.g., SEA85.159.R6-L01 -> SEALAB85)
+            if location.startswith('SEA85'):
+                output.append(f"  {Fore.CYAN}Lab{Style.RESET_ALL}: {Fore.WHITE}SEALAB85{Style.RESET_ALL}")
+        
+        if rack and rack.get('position'):
             output.append(f"  {Fore.CYAN}Position{Style.RESET_ALL}: {Fore.WHITE}{rack['position']}{Style.RESET_ALL}")
-        if rack.get('consolevlan'):
+        elif location:
+            # Extract rack position from location
+            rack_pos = location.split('.')[0] if '.' in location else location
+            if rack_pos:
+                output.append(f"  {Fore.CYAN}Position{Style.RESET_ALL}: {Fore.WHITE}{rack_pos}{Style.RESET_ALL}")
+        
+        if rack and rack.get('consolevlan'):
             vlan = rack['consolevlan']
             if vlan.get('vlanid'):
                 output.append(f"  {Fore.CYAN}VLAN ID{Style.RESET_ALL}: {Fore.WHITE}{vlan['vlanid']}{Style.RESET_ALL}")
