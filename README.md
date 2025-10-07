@@ -1,60 +1,136 @@
 # LabOps
 
 A Python CLI tool for managing datacenter lab resources (hosts, racks, switches).
-Built to make troubleshooting and inventory navigation easier — returns data in clean JSON,
-ready for scripting with `jq` or automation pipelines.
+Built to streamline troubleshooting and inventory navigation with formatted output
+and powerful filtering capabilities for datacenter operations.
+
 ## Features
-- List hosts, racks, and switches
-- Lookup a host by asset ID
-- Show rack contents (hosts + switches in one view)
-- Summarize datacenter health (host status, rack usage, switch utilization)
-- JSON-first output for automation
-- Configurable via `.env` (API URL, API Key)
+
+- **Host Management**: List, filter, and lookup hosts by multiple criteria
+- **Rack Operations**: View rack contents and host positioning
+- **Advanced Filtering**: Status, platform, BMC, lab, and fuzzy matching
+- **Performance Optimized**: 5-minute caching system for instant responses
+- **Professional Output**: Clean, formatted display with color coding
+- **API Integration**: Direct connection to hardware tracking systems
 
 ## Setup
+
 ```bash
 git clone https://github.com/your-username/labops.git
-cd /filepath/labops
+cd labops
 # Create a virtual environment (recommended)
 python -m venv venv
-source venv/bin/activate  # On Windows use venv\Scripts\activate
-pip 
-install -r requirements.txt 
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
-## Example Usage
+
+## Configuration
+
+Create a `.env` file with your API credentials:
 ```bash
-# List all hosts
-labops hosts
-
-# Lookup a single host
-labops host --asset-id 8401000103
-
-# Show contents of a rack
-labops rack-contents --rack-id R01
-
-# Summary view
-labops summary | jq .
-
+API_BASE_URL=https://your-api-endpoint.com/api/v1/track
+API_KEY=your-api-key-here
 ```
+
+## Usage Examples
+
+### Host Operations
+```bash
+# List all available hosts
+labops hosts --available
+
+# Find hosts by platform (with fuzzy matching)
+labops hosts --platform dell
+
+# Filter by multiple criteria
+labops hosts --status Available --bmc --limit 10
+
+# Lookup specific host
+labops 1234567890
+```
+
+### Rack Operations
+```bash
+# List all racks in a lab
+labops racks --lab LAB01
+
+# View specific rack contents
+labops rack R1-A01
+
+# List racks with limit
+labops racks --limit 5
+```
+
+### System Overview
+```bash
+# Datacenter summary
+labops summary
+```
+
 ## Example Output
+
+### Host Lookup
 ```bash
-{
-  "hosts": {
-    "total": 2,
-    "by_status": {
-      "available": 1,
-      "in-use": 1
-    }
-  },
-  "racks": {
-    "total": 2
-  },
-  "switches": {
-    "total": 2,
-    "by_model": {
-      "Cisco-9300": 1,
-      "Juniper-EX": 1
-    }
-  }
-}
+$ labops 1234567890
+```
+```
+Asset ID: 1234567890
+Status: Available
+Location: DC1.R1-A01.15
+
+Platform: DELL-R740
+Manufacturer: DELL
+Hardware ID: DL.R740-ABC123
+
+Console IP: 10.1.100.50
+
+Rack Info:
+  Lab: LAB01
+  Position: DC1.R1-A01
+  VLAN ID: 100
+  Subnet: 10.1.0.0/24
+
+Usage Type: General Use
+```
+
+### Rack Contents
+```bash
+$ labops rack R1-A01
+```
+```
+Rack Position: R1-A01
+Lab: LAB01
+Host Count: 5
+
+Hosts by Status:
+  Available: 4
+  Reserved: 1
+
+Hosts in Rack:
+  R1-A01.10: 1234567890 (DELL-R740) - Available
+  R1-A01.12: 1234567891 (HP-DL380) - Available
+  R1-A01.14: 1234567892 (SUPERMICRO-X11) - Reserved
+  R1-A01.16: 1234567893 (DELL-R640) - Available
+  R1-A01.18: 1234567894 (HP-DL360) - Available
+```
+
+### Host Filtering
+```bash
+$ labops hosts --platform DELL --limit 5
+```
+```
+Showing: 5 of 127 total hosts
+
+Asset ID: 1234567890
+Status: Available
+Location: DC1.R1-A01.15
+
+Platform: DELL-R740
+Manufacturer: DELL
+Console IP: 10.1.100.50
+LAN IP: 10.1.200.50
+
+--------------------------------------------------
+
+Total Hosts: 5
 ```
