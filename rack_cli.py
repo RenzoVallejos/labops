@@ -1,10 +1,10 @@
 # Handles CLI interface (Click decorators, options)
 import click
 from commands.lookup import lookup_host
+from commands.lookup_rack import lookup_rack
 from commands.list_hosts import list_hosts
 from commands.list_racks import list_racks
 from commands.list_switches import list_switches
-from commands.rack_contents import rack_contents
 from commands.summary import summary
 
 
@@ -55,8 +55,9 @@ def cli(ctx):
 @click.option('--liquidated', is_flag=True, help='Show only liquidated hosts')
 @click.option('--pending-disposal', is_flag=True, help='Show only hosts pending disposal')
 @click.option('--returned-vendor', is_flag=True, help='Show only hosts returned to vendor')
+@click.option('--limit', type=int, help='Limit number of results (e.g., --limit 50)')
 @click.option('--all', 'search_all', help='Fuzzy search across all fields (case-insensitive)')
-def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, available, pending, scrapped, reserved, checked_out, in_qual, pre_qual, core_services, liquidated, pending_disposal, returned_vendor, search_all):
+def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, available, pending, scrapped, reserved, checked_out, in_qual, pre_qual, core_services, liquidated, pending_disposal, returned_vendor, limit, search_all):
     """List all hosts (filter by specific fields or search across all with --all)"""
     # Convert flag shortcuts to status filter
     if available:
@@ -82,13 +83,16 @@ def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_own
     elif returned_vendor:
         status = 'Returned to Vendor'
     
-    list_hosts(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, search_all)
+    list_hosts(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, limit, search_all)
 
 
 @cli.command(name="racks")
-def list_racks_cmd():
+@click.option('--lab', help='Filter by lab (e.g., SEALAB85)')
+@click.option('--position', help='Filter by specific rack position')
+@click.option('--limit', type=int, help='Limit number of results')
+def list_racks_cmd(lab, position, limit):
     """List all racks"""
-    list_racks()
+    list_racks(lab=lab, position=position, limit=limit)
 
 
 @cli.command(name="switches")
@@ -97,11 +101,11 @@ def list_switches_cmd():
     list_switches()
 
 
-@cli.command(name="rack-contents")
-@click.option('--rack-id', help='Show all hosts and switches in a rack')
-def rack_contents_cmd(rack_id):
-    """Show hosts & switches in a given rack"""
-    rack_contents(rack_id)
+@cli.command(name="rack")
+@click.argument('position')
+def rack_cmd(position):
+    """Show details for a specific rack"""
+    lookup_rack(position)
 
 
 @cli.command(name="summary")

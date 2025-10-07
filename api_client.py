@@ -24,7 +24,7 @@ API_KEY = os.getenv("API_KEY", "mock-secret-token")
 
 def get_hosts(status=None, platform=None, hostname=None,
               usagetype=None, location=None,
-              checkout_owner=None, bmc=False, no_bmc=False, search_all=False):
+              checkout_owner=None, bmc=False, no_bmc=False, limit=None, search_all=False):
     """
     Fetch hosts from the API with optional filtering.
     """
@@ -129,31 +129,69 @@ def get_hosts(status=None, platform=None, hostname=None,
                 click.echo(f"No hosts found with platform '{platform}' and no similar matches.")
                 return {"response": [], "count": 0}
 
-    return {"response": hosts, "count": len(hosts)}
+    # Apply limit if specified
+    total_count = len(hosts)
+    if limit and limit > 0:
+        hosts = hosts[:limit]
+    
+    return {"response": hosts, "count": len(hosts), "total_available": total_count}
 
 
 
 
 def get_racks(location=None, rack_type=None, lab=None, usage=None, search_all=False):
-    now = time.time()
-    cache_data = _load_cache()
+    """Get rack information by extracting from hosts data"""
+    # Get hosts data (which includes rack info)
+    hosts_data = get_hosts()
+    hosts = hosts_data['response']
     
-    if 'racks' in cache_data and now - cache_data.get('racks_time', 0) < CACHE_DURATION:
-        data = cache_data['racks']
-    else:
-        click.echo("Fetching racks from API...")
-        headers = {"X-Api-Key": API_KEY}
-        response = requests.get(f"{API_BASE_URL}/racks", headers=headers, verify=False)
-        response.raise_for_status()
-        data = response.json()
-        click.echo("✓ Data retrieved successfully")
-        _save_cache('racks', data, now)
+    # Extract unique racks
+    racks_dict = {}
+    for host in hosts:
+        rack_info = host.get('serverrack', {})
+        position = rack_info.get('position')
+        
+        if position:  # Skip hosts without rack position
+            if position not in racks_dict:
+                racks_dict[position] = {
+                    'position': position,
+                    'lab': rack_info.get('lab'),
+                    'consolevlan': rack_info.get('consolevlan'),
+                    'host_count': 0,
+                    'hosts': []
+                }
+            
+            racks_dict[position]['host_count'] += 1
+            racks_dict[position]['hosts'].append({
+                'id': host.get('id'),
+                'assetid': host.get('assetid'),
+                'platform': host.get('platform'),
+                'status': host.get('status', {}).get('status'),
+                'location': host.get('location')
+            })
+    
+    # Convert to list and apply filters
+    racks = list(racks_dict.values())
+    
+    if lab:
+        racks = [r for r in racks if r.get('lab') == lab]
+    
+    return racks
 
-    # Basic local filtering (mock)
-    if location:
-        data = [r for r in data if r.get("location") == location]
+def get_rack_by_position(position):
+    """Get rack by position"""
+    racks = get_racks()
+    for rack in racks:
+        if rack.get('position') == position:
+            return rack
+    return None
 
-    return data
+def get_rack_details(rack_id):
+    """Get detailed rack information including switches"""
+    headers = {"X-Api-Key": API_KEY}
+    response = requests.get(f"{API_BASE_URL}/serverracks/details?id={rack_id}", headers=headers, verify=False)
+    response.raise_for_status()
+    return response.json()
 
 def get_switches(status=None, rack=None, location=None, search_all=False):
     now = time.time()
