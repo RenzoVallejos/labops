@@ -27,10 +27,24 @@ class CustomGroup(click.Group):
 
 
 @click.group(cls=CustomGroup, invoke_without_command=True)
-@click.version_option("0.1.0")
+@click.version_option("1.0.0")
 @click.pass_context
 def cli(ctx):
-    """Rack CLI - Manage datacenter host, rack & switch information"""
+    """LabOps - Datacenter Lab Resource Management CLI
+    
+    A powerful command-line tool for managing and discovering datacenter lab resources.
+    Quickly find hosts, explore rack contents, and navigate inventory with advanced
+    filtering and search capabilities.
+    
+    \b
+    Examples:
+      labops 1234567890                    # Lookup host by asset ID
+      labops hosts --available --limit 10  # List 10 available hosts
+      labops hosts --platform dell         # Find DELL hosts with fuzzy matching
+      labops hosts --location all          # Search all datacenters globally
+      labops rack R1-A01                   # Show detailed rack contents
+      labops racks --limit 20              # List first 20 racks
+    """
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
 
@@ -40,7 +54,7 @@ def cli(ctx):
 @click.option('--platform', help='Fuzzy search hosts by platform (case-insensitive)')
 @click.option('--hostname', help='Fuzzy search hosts by hostname (case-insensitive)')
 @click.option('--usagetype', help='Fuzzy search hosts by usage type (case-insensitive)')
-@click.option('--location', help='Fuzzy search hosts by location (case-insensitive)')
+@click.option('--location', help='Filter by location prefix (e.g., sea85, sjc) or use "all" for all locations')
 @click.option('--checkout-owner', help='Fuzzy search hosts by checkout owner (case-insensitive)')
 @click.option('--bmc', is_flag=True, help='Show only hosts with console IP addresses')
 @click.option('--no-bmc', is_flag=True, help='Show only hosts without console IP addresses')
@@ -58,7 +72,11 @@ def cli(ctx):
 @click.option('--limit', type=int, help='Limit number of results (e.g., --limit 50)')
 @click.option('--all', 'search_all', help='Fuzzy search across all fields (case-insensitive)')
 def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, available, pending, scrapped, reserved, checked_out, in_qual, pre_qual, core_services, liquidated, pending_disposal, returned_vendor, limit, search_all):
-    """List all hosts (filter by specific fields or search across all with --all)"""
+    """List and filter datacenter hosts with advanced search capabilities
+    
+    Defaults to SEA85 location for performance. Use --location all for global search.
+    Supports fuzzy matching on platforms and multiple filtering options.
+    """
     # Convert flag shortcuts to status filter
     if available:
         status = 'Available'
@@ -87,30 +105,44 @@ def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_own
 
 
 @cli.command(name="racks")
-@click.option('--lab', help='Filter by lab (e.g., SEALAB85)')
 @click.option('--position', help='Filter by specific rack position')
 @click.option('--limit', type=int, help='Limit number of results')
-def list_racks_cmd(lab, position, limit):
-    """List all racks"""
-    list_racks(lab=lab, position=position, limit=limit)
+def list_racks_cmd(position, limit):
+    """List datacenter racks with host counts and status summaries
+    
+    Shows rack positions, host counts, and status breakdowns.
+    Filter by specific rack position or limit results.
+    """
+    list_racks(position=position, limit=limit)
 
 
 @cli.command(name="switches")
 def list_switches_cmd():
-    """List all switches"""
+    """List network switches and infrastructure devices
+    
+    Display switch inventory and network infrastructure information.
+    """
     list_switches()
 
 
 @cli.command(name="rack")
 @click.argument('position')
 def rack_cmd(position):
-    """Show details for a specific rack"""
+    """Show detailed rack contents including all hosts and their specifications
+    
+    Displays a comprehensive table with asset IDs, hardware IDs, platforms,
+    BMC IPs, and LAN IPs for all hosts in the specified rack.
+    """
     lookup_rack(position)
 
 
 @cli.command(name="summary")
 def summary_cmd():
-    """Show a summary of datacenter resources"""
+    """Display datacenter resource summary and health overview
+    
+    Provides high-level statistics on host counts, rack utilization,
+    and overall datacenter capacity and status.
+    """
     summary()
 
 

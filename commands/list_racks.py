@@ -61,11 +61,11 @@ def format_racks_list(racks_data):
     
     return "\n".join(output)
 
-def list_racks(lab=None, position=None, limit=None):
+def list_racks(position=None, limit=None):
     """
     Retrieve and display rack information from the API in formatted output.
     """
-    racks = get_racks(lab=lab)
+    racks = get_racks()
     
     if position:
         racks = [r for r in racks if r.get('position') == position]

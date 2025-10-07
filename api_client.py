@@ -62,6 +62,17 @@ def get_hosts(status=None, platform=None, hostname=None,
     elif no_bmc:
         hosts = [h for h in hosts if not h.get("con_ip") or not h.get("con_ip").strip()]
 
+    # Location filtering
+    if location:
+        if location.upper() == 'ALL':
+            # Show all hosts - no filtering
+            pass
+        else:
+            hosts = [h for h in hosts if h.get('location', '').upper().startswith(location.upper())]
+    else:
+        # Default to SEA85 hosts only
+        hosts = [h for h in hosts if h.get('location', '').upper().startswith('SEA85')]
+    
     # Platform filtering with fuzzy matching
     if platform:
         # Single pass to get platforms and exact matches
@@ -139,7 +150,7 @@ def get_hosts(status=None, platform=None, hostname=None,
 
 
 
-def get_racks(location=None, rack_type=None, lab=None, usage=None, search_all=False):
+def get_racks():
     """Get rack information by extracting from hosts data"""
     # Get hosts data (which includes rack info)
     hosts_data = get_hosts()
@@ -166,15 +177,15 @@ def get_racks(location=None, rack_type=None, lab=None, usage=None, search_all=Fa
                 'id': host.get('id'),
                 'assetid': host.get('assetid'),
                 'platform': host.get('platform'),
+                'hardwareid': host.get('hardwareid'),
                 'status': host.get('status', {}).get('status'),
-                'location': host.get('location')
+                'location': host.get('location'),
+                'con_ip': host.get('con_ip'),
+                'lan_ip': host.get('lan_ip')
             })
     
-    # Convert to list and apply filters
+    # Convert to list
     racks = list(racks_dict.values())
-    
-    if lab:
-        racks = [r for r in racks if r.get('lab') == lab]
     
     return racks
 

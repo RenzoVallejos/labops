@@ -35,20 +35,40 @@ def format_rack_data(rack):
         # Sort hosts by location
         hosts = sorted(rack['hosts'], key=lambda x: x.get('location') or '')
         
+        # Table headers
+        output.append("")
+        header = f"{Fore.CYAN}{'Asset ID':<12} {'Hardware ID':<20} {'Platform':<15} {'BMC IP':<15} {'LAN IP':<15}{Style.RESET_ALL}"
+        output.append(header)
+        output.append("-" * 77)
+        
+        # Table rows
         for host in hosts:
-            location = host.get('location', 'N/A')
-            host_line = f"  {Fore.CYAN}{location}{Style.RESET_ALL}: "
-            host_line += f"{Fore.WHITE}{host.get('assetid', 'N/A')}{Style.RESET_ALL} "
-            host_line += f"({host.get('platform', 'Unknown')}) "
-            host_line += f"- {host.get('status', 'Unknown')}"
-            output.append(host_line)
+            if not isinstance(host, dict):
+                continue
+                
+            assetid = (host.get('assetid') or 'N/A')[:11]  # Truncate if too long
+            hardwareid = (host.get('hardwareid') or 'N/A')[:19]  # Truncate if too long
+            platform = (host.get('platform') or 'N/A')[:14]  # Truncate if too long
+            con_ip = (host.get('con_ip') or 'N/A')[:14]  # Truncate if too long
+            lan_ip = (host.get('lan_ip') or 'N/A')[:14]  # Truncate if too long
+            
+            row = f"{Fore.WHITE}{assetid:<12} {hardwareid:<20} {platform:<15} {con_ip:<15} {lan_ip:<15}{Style.RESET_ALL}"
+            output.append(row)
     
     return "\n".join(output)
 
 def lookup_rack(position):
     """Find a rack by position and display its details"""
     try:
+        # First try exact match
         rack = get_rack_by_position(position)
+        
+        # If not found and position has U position (contains dot), try without U position
+        if not rack and '.' in position:
+            # Extract rack position without U position (e.g., SEA85.159.R6-L10.14 -> SEA85.159.R6-L10)
+            rack_only = '.'.join(position.split('.')[:-1])
+            rack = get_rack_by_position(rack_only)
+        
         if rack:
             formatted_output = format_rack_data(rack)
             click.echo(formatted_output)
