@@ -3,6 +3,7 @@ import json
 import tempfile
 import threading
 import sys
+import re
 
 import click
 import requests
@@ -11,7 +12,7 @@ import difflib
 from dotenv import load_dotenv
 import time
 
-CACHE_DURATION = 180  # 5 minutes
+CACHE_DURATION = 300  # 5 minutes
 CACHE_FILE = os.path.join(tempfile.gettempdir(), 'labops_cache.json')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -185,28 +186,37 @@ def get_racks():
     for host in hosts:
         rack_info = host.get('serverrack', {})
         position = rack_info.get('position')
+        location = host.get('location', '').strip()
         
-        if position:  # Skip hosts without rack position
-            if position not in racks_dict:
-                racks_dict[position] = {
-                    'position': position,
-                    'lab': rack_info.get('lab'),
-                    'consolevlan': rack_info.get('consolevlan'),
-                    'host_count': 0,
-                    'hosts': []
-                }
-            
-            racks_dict[position]['host_count'] += 1
-            racks_dict[position]['hosts'].append({
-                'id': host.get('id'),
-                'assetid': host.get('assetid'),
-                'platform': host.get('platform'),
-                'hardwareid': host.get('hardwareid'),
-                'status': host.get('status', {}).get('status'),
-                'location': host.get('location'),
-                'con_ip': host.get('con_ip'),
-                'lan_ip': host.get('lan_ip')
-            })
+        # Use serverrack.position if available, otherwise extract from location
+        if position:
+            rack_position = position.strip()
+        elif location:
+            # Remove everything after first whitespace (space, tab, etc.)
+            rack_position = location.rstrip().split()[0] if location.rstrip().split() else location.rstrip()
+        else:
+            continue  # Skip hosts without rack info
+        
+        if rack_position not in racks_dict:
+            racks_dict[rack_position] = {
+                'position': rack_position,
+                'lab': rack_info.get('lab') or ('SEALAB85' if location.startswith('SEA85') else None),
+                'consolevlan': rack_info.get('consolevlan'),
+                'host_count': 0,
+                'hosts': []
+            }
+        
+        racks_dict[rack_position]['host_count'] += 1
+        racks_dict[rack_position]['hosts'].append({
+            'id': host.get('id'),
+            'assetid': host.get('assetid'),
+            'platform': host.get('platform'),
+            'hardwareid': host.get('hardwareid'),
+            'status': host.get('status', {}).get('status'),
+            'location': host.get('location'),
+            'con_ip': host.get('con_ip'),
+            'lan_ip': host.get('lan_ip')
+        })
     
     # Convert to list
     racks = list(racks_dict.values())

@@ -1,6 +1,6 @@
 import click
 from colorama import Fore, Style, init
-from api_client import get_rack_by_position
+from api_client import get_rack_by_position, get_k2_ip
 
 init()
 
@@ -13,8 +13,7 @@ def format_rack_data(rack):
         output.append(f"{Fore.CYAN}Rack Position{Style.RESET_ALL}: {Fore.WHITE}{rack['position']}{Style.RESET_ALL}")
     if rack.get('lab'):
         output.append(f"{Fore.CYAN}Lab{Style.RESET_ALL}: {Fore.WHITE}{rack['lab']}{Style.RESET_ALL}")
-    if rack.get('host_count'):
-        output.append(f"{Fore.CYAN}Host Count{Style.RESET_ALL}: {Fore.WHITE}{rack['host_count']}{Style.RESET_ALL}")
+
     
     # Console VLAN info
     if rack.get('consolevlan'):
@@ -30,16 +29,15 @@ def format_rack_data(rack):
     # Hosts in rack
     if rack.get('hosts'):
         output.append("")
-        output.append(f"{Fore.CYAN}Hosts in Rack{Style.RESET_ALL}:")
-        
         # Sort hosts by location
         hosts = sorted(rack['hosts'], key=lambda x: x.get('location') or '')
+        output.append(f"{Fore.CYAN}Hosts in Rack{Style.RESET_ALL}: {Fore.WHITE}{len(hosts)}{Style.RESET_ALL}")
         
         # Table headers
         output.append("")
-        header = f"{Fore.CYAN}{'Asset ID':<12} {'Hardware ID':<20} {'Platform':<15} {'BMC IP':<15} {'LAN IP':<15}{Style.RESET_ALL}"
+        header = f"{Fore.CYAN}{'Asset ID':<12} {'Hardware ID':<20} {'Platform':<15} {'BMC IP':<15} {'K2 IP':<15} {'LAN IP':<15}{Style.RESET_ALL}"
         output.append(header)
-        output.append("-" * 77)
+        output.append("-" * 92)
         
         # Table rows
         for host in hosts:
@@ -52,7 +50,14 @@ def format_rack_data(rack):
             con_ip = (host.get('con_ip') or 'N/A')[:14]  # Truncate if too long
             lan_ip = (host.get('lan_ip') or 'N/A')[:14]  # Truncate if too long
             
-            row = f"{Fore.WHITE}{assetid:<12} {hardwareid:<20} {platform:<15} {con_ip:<15} {lan_ip:<15}{Style.RESET_ALL}"
+            # Get K2 IP if hardware ID is available
+            k2_ip = 'N/A'
+            if host.get('hardwareid'):
+                k2_result = get_k2_ip(host.get('hardwareid'))
+                if k2_result:
+                    k2_ip = k2_result[:14]  # Truncate if too long
+            
+            row = f"{Fore.WHITE}{assetid:<12} {hardwareid:<20} {platform:<15} {con_ip:<15} {k2_ip:<15} {lan_ip:<15}{Style.RESET_ALL}"
             output.append(row)
     
     return "\n".join(output)
