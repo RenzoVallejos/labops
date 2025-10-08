@@ -52,7 +52,7 @@ labops 1234567890
 ### Rack Operations
 ```bash
 # List all racks in a lab
-labops racks --lab LAB01
+labops racks --location LAB01
 
 # View specific rack contents
 labops rack R1-A01

@@ -1,6 +1,8 @@
 import os
 import json
 import tempfile
+import threading
+import sys
 
 import click
 import requests
@@ -9,7 +11,7 @@ import difflib
 from dotenv import load_dotenv
 import time
 
-CACHE_DURATION = 300  # 5 minutes
+CACHE_DURATION = 180  # 5 minutes
 CACHE_FILE = os.path.join(tempfile.gettempdir(), 'labops_cache.json')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -35,13 +37,35 @@ def get_hosts(status=None, platform=None, hostname=None,
     if 'hosts' in cache_data and now - cache_data.get('hosts_time', 0) < CACHE_DURATION:
         data = cache_data['hosts']
     else:
-        # Fetch from API
-        click.echo("Fetching hosts from API...")
-        headers = {"X-Api-Key": API_KEY}
-        response = requests.get(f"{API_BASE_URL}/hosts", headers=headers, verify=False)
-        response.raise_for_status()
-        data = response.json()
-        click.echo(" Data retrieved successfully")
+        # Fetch from API with live timer and animated dots
+        start_time = time.time()
+        timer_running = True
+        
+        def show_timer():
+            dot_cycle = 0
+            while timer_running:
+                elapsed = int(time.time() - start_time)
+                dots = [".  ", ".. ", "..."][dot_cycle % 3]
+                sys.stdout.write(f"\rFetching hosts from API{dots} Elapsed: {elapsed}.0s")
+                sys.stdout.flush()
+                dot_cycle += 1
+                time.sleep(0.5)
+        
+        # Start timer thread
+        timer_thread = threading.Thread(target=show_timer, daemon=True)
+        timer_thread.start()
+        
+        try:
+            headers = {"X-Api-Key": API_KEY}
+            response = requests.get(f"{API_BASE_URL}/hosts", headers=headers, verify=False)
+            response.raise_for_status()
+            data = response.json()
+        finally:
+            # Stop timer
+            timer_running = False
+            elapsed = int(time.time() - start_time)
+            sys.stdout.write(f"\rData retrieved successfully in {elapsed}.0s\n")
+            sys.stdout.flush()
 
         # Cache the response
         _save_cache('hosts', data, now)
@@ -240,6 +264,29 @@ def get_host_by_hardware_id(hardware_id):
     response = requests.get(f"{API_BASE_URL}/hosts/hoststatus?hardwareid={hardware_id}", headers=headers, verify=False)
     response.raise_for_status()
     return response.json()
+
+def get_k2_ip(hardware_id):
+    """Get K2 IP from interfaces endpoint"""
+    if not hardware_id:
+        return None
+    
+    try:
+        headers = {"X-Api-Key": API_KEY}
+        # Interfaces endpoint is not under /track path
+        base_url = API_BASE_URL.replace('/api/v1/track', '/api/v1')
+        url = f"{base_url}/interfaces/{hardware_id}"
+        response = requests.get(url, headers=headers, verify=False)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Look for K2 type in direct_access array
+        if 'direct_access' in data:
+            for interface in data['direct_access']:
+                if interface.get('type') == 'K2':
+                    return interface.get('ip')
+        return None
+    except Exception:
+        return None
 
 def _load_cache():
     """Load cache from file"""
