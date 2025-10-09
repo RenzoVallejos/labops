@@ -11,3 +11,9 @@ python-dotenv==1.0.1
 fastapi==0.115.2
 uvicorn==0.32.0
 
+# TUI framework
+textual==0.45.1
+
+# TUI framework
+textual==0.45.1
+

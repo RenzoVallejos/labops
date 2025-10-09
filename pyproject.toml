@@ -14,7 +14,8 @@ dependencies = [
   "requests",
   "python-dotenv",
   "fastapi",
-  "uvicorn"
+  "uvicorn",
+  "textual"
 ]
 
 [project.scripts]
@@ -22,5 +23,5 @@ labops = "rack_cli:cli"
 
 [tool.setuptools]
 packages = ["commands"]
-py-modules = ["rack_cli", "api_client", "mock_api", "utils"]
+py-modules = ["rack_cli", "api_client", "mock_api", "utils", "tui"]
 

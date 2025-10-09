@@ -149,5 +149,22 @@ def summary_cmd():
     summary()
 
 
+@cli.command(name="tui")
+def tui_cmd():
+    """Launch interactive Terminal User Interface
+    
+    Opens a full-screen interactive interface for browsing hosts,
+    racks, and performing searches with keyboard navigation.
+    """
+    try:
+        from tui import LabOpsTUI
+        app = LabOpsTUI()
+        app.run()
+    except ImportError:
+        click.echo("TUI module not found. Please run from the project directory.")
+    except Exception as e:
+        click.echo(f"Error starting TUI: {e}")
+
+
 if __name__ == "__main__":
     cli()
