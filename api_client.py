@@ -12,7 +12,7 @@ import difflib
 from dotenv import load_dotenv
 import time
 
-CACHE_DURATION = 600  # 5 minutes
+CACHE_DURATION = 2000  # 5 minutes
 CACHE_FILE = os.path.join(tempfile.gettempdir(), 'labops_cache.json')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

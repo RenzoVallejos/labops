@@ -8,6 +8,7 @@ and powerful filtering capabilities for datacenter operations.
 
 - **Host Management**: List, filter, and lookup hosts by multiple criteria
 - **Rack Operations**: View rack contents and host positioning
+- **Interactive TUI**: Full-screen terminal interface for visual exploration
 - **Advanced Filtering**: Status, platform, BMC, lab, and fuzzy matching
 - **Performance Optimized**: 5-minute caching system for instant responses
 - **Professional Output**: Clean, formatted display with color coding
@@ -59,6 +60,12 @@ labops rack R1-A01
 
 # List racks with limit
 labops racks --limit 5
+```
+
+### Interactive Terminal UI
+```bash
+# Launch interactive TUI for visual exploration
+labops tui
 ```
 
 ### System Overview
@@ -137,3 +144,35 @@ LAN IP: 10.1.200.50
 
 Total Hosts: 5
 ```
+
+### Interactive TUI
+```bash
+$ labops tui
+```
+```
+┌─ SEALAB85 Racks ─────────────────────┐┌─ Rack SEA85.159.R6-L01 ──────────────┐
+│ ▶ SEA85.159 (12 racks, 180 hosts)   ││ Rack: SEA85.159.R6-L01               │
+│ ▼ SEA85.6920 (8 racks, 95 hosts)    ││ Lab: SEALAB85                        │
+│   ▶ SEA85.6920.R1-A01 (15 hosts)    ││ Host Count: 15                       │
+│   ▼ SEA85.6920.R1-A02 (12 hosts)    ││                                      │
+│     └─ 1703827523: HUMBOLDT21       ││ Hosts in Rack (15):                 │
+│     └─ 1703827484: HUMBOLDT21       ││   • 1703827523: HUMBOLDT21 [Avail]  │
+│     └─ ... and 10 more hosts        ││     Console IP: 172.16.76.116       │
+│                                      ││   • 1703827484: HUMBOLDT21 [Avail]  │
+└──────────────────────────────────────┘└──────────────────────────────────────┘
+
+Navigation: Arrow keys, Enter to expand/select, 'q' to quit
+```
+
+## Interface Options
+
+**Command Line Interface (CLI)** - Perfect for automation and scripting:
+- Fast, direct commands
+- Scriptable and pipeable output
+- Great for experienced users
+
+**Terminal User Interface (TUI)** - Perfect for exploration and discovery:
+- Visual hierarchy of rooms → racks → hosts
+- Interactive browsing with keyboard navigation
+- Expandable tree view with detailed panels
+- Great for discovering available resources
