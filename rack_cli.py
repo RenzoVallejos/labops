@@ -56,8 +56,7 @@ def cli(ctx):
 @click.option('--usagetype', help='Fuzzy search hosts by usage type (case-insensitive)')
 @click.option('--location', help='Filter by location prefix (e.g., sea85, sjc) or use "all" for all locations')
 @click.option('--checkout-owner', help='Fuzzy search hosts by checkout owner (case-insensitive)')
-@click.option('--bmc', is_flag=True, help='Show only hosts with console IP addresses')
-@click.option('--no-bmc', is_flag=True, help='Show only hosts without console IP addresses')
+@click.option('--bmc', type=click.Choice(['available', 'unavailable'], case_sensitive=False), help='Filter hosts by BMC availability (available/unavailable)')
 @click.option('--available', is_flag=True, help='Show only available hosts')
 @click.option('--pending', is_flag=True, help='Show only hosts pending admin')
 @click.option('--scrapped', is_flag=True, help='Show only scrapped hosts')
@@ -71,7 +70,7 @@ def cli(ctx):
 @click.option('--returned-vendor', is_flag=True, help='Show only hosts returned to vendor')
 @click.option('--limit', type=int, help='Limit number of results (e.g., --limit 50)')
 @click.option('--all', 'search_all', help='Fuzzy search across all fields (case-insensitive)')
-def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, available, pending, scrapped, reserved, checked_out, in_qual, pre_qual, core_services, liquidated, pending_disposal, returned_vendor, limit, search_all):
+def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_owner, bmc, available, pending, scrapped, reserved, checked_out, in_qual, pre_qual, core_services, liquidated, pending_disposal, returned_vendor, limit, search_all):
     """List and filter datacenter hosts with advanced search capabilities
     
     Defaults to SEA85 location for performance. Use --location all for global search.
@@ -101,7 +100,11 @@ def list_hosts_cmd(status, platform, hostname, usagetype, location, checkout_own
     elif returned_vendor:
         status = 'Returned to Vendor'
     
-    list_hosts(status, platform, hostname, usagetype, location, checkout_owner, bmc, no_bmc, limit, search_all)
+    # Convert bmc string to boolean flags for backward compatibility
+    bmc_flag = bmc == 'available' if bmc else False
+    no_bmc_flag = bmc == 'unavailable' if bmc else False
+    
+    list_hosts(status, platform, hostname, usagetype, location, checkout_owner, bmc_flag, no_bmc_flag, limit, search_all)
 
 
 @cli.command(name="racks")
