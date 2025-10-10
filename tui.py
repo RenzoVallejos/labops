@@ -2,7 +2,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Header, Footer, Tree, Static
 from textual.binding import Binding
-from api_client import get_hosts, get_racks
+from api_client import get_hosts, get_racks, get_k2_ip
 
 class LabOpsTUI(App):
     """LabOps Terminal User Interface"""
@@ -179,6 +179,15 @@ class LabOpsTUI(App):
             host_info.append(f"  Console IP: {host.get('con_ip')}")
         else:
             host_info.append("  Console IP: N/A")
+        
+        # Get K2 IP if hardware ID is available
+        k2_ip = 'N/A'
+        if host.get('hardwareid'):
+            k2_result = get_k2_ip(host.get('hardwareid'))
+            if k2_result:
+                k2_ip = k2_result
+        
+        host_info.append(f"  K2 IP: {k2_ip}")
             
         if host.get('lan_ip'):
             host_info.append(f"  LAN IP: {host.get('lan_ip')}")
